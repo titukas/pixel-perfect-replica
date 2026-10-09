@@ -94,7 +94,7 @@ function TermsGate() {
     setBusy(true);
     const { error } = await supabase.rpc("accept_terms", { _terms: TERMS_VERSION, _privacy: PRIVACY_VERSION });
     setBusy(false);
-    if (error) return toast.error(errorMessage(error));
+    if (error) { toast.error(errorMessage(error)); return; }
     qc.invalidateQueries({ queryKey: ["household"] });
   }
   return (
