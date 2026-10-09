@@ -39,7 +39,7 @@ function ChoresPage() {
           </div>
         )}
         {chores.data?.map((c) => {
-          const s = STATUS[c.status];
+          const s = STATUS[c.status] ?? { label: c.status, cls: "" };
           return (
             <article key={c.id} className="rounded-2xl bg-card p-4 shadow-card">
               <div className="flex items-start justify-between gap-2">

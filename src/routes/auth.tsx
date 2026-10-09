@@ -57,7 +57,7 @@ function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("signin");
   const [busy, setBusy] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Partial<Record<"displayName"|"email"|"password"|"gender"|"terms", string>>>({});
   const [sent, setSent] = useState<string | null>(null);
   const [form, setForm] = useState({ displayName: "", email: "", password: "", gender: "", terms: false });
   const set = (k: keyof typeof form, v: string | boolean) => setForm((f) => ({ ...f, [k]: v }));
@@ -74,7 +74,7 @@ function AuthPage() {
     const dest = safePath(search.redirect);
     if (mode === "signup") {
       const r = signUpSchema.safeParse(form);
-      if (!r.success) return collect(r.error);
+      if (!r.success) { collect(r.error); return; }
       setBusy(true);
       const { data, error } = await supabase.auth.signUp({
         email: r.data.email,
@@ -85,24 +85,24 @@ function AuthPage() {
         },
       });
       setBusy(false);
-      if (error) return toast.error(error.message);
-      if (data.session) return navigate({ to: dest });
+      if (error) { toast.error(error.message); return; }
+      if (data.session) { navigate({ to: dest }); return; }
       setSent(`We sent a confirmation link to ${r.data.email}. Open it to finish creating your account.`);
     } else if (mode === "signin") {
       const r = signInSchema.safeParse(form);
-      if (!r.success) return collect(r.error);
+      if (!r.success) { collect(r.error); return; }
       setBusy(true);
       const { error } = await supabase.auth.signInWithPassword(r.data);
       setBusy(false);
-      if (error) return toast.error(error.message === "Invalid login credentials" ? "Email or password is incorrect" : error.message);
+      if (error) { toast.error(error.message === "Invalid login credentials" ? "Email or password is incorrect" : error.message); return; }
       navigate({ to: dest });
     } else {
       const r = z.string().trim().email("Enter a valid email").safeParse(form.email);
-      if (!r.success) return setErrors({ email: r.error.issues[0].message });
+      if (!r.success) { setErrors({ email: r.error.issues[0]?.message ?? "Invalid email" }); return; }
       setBusy(true);
       const { error } = await supabase.auth.resetPasswordForEmail(r.data, { redirectTo: `${window.location.origin}/reset-password` });
       setBusy(false);
-      if (error) return toast.error(error.message);
+      if (error) { toast.error(error.message); return; }
       setSent(`If an account exists for ${r.data}, a reset link is on its way.`);
     }
   }
@@ -110,7 +110,7 @@ function AuthPage() {
   async function google() {
     if (search.redirect) sessionStorage.setItem("pp_redirect", safePath(search.redirect));
     const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (res.error) return toast.error(res.error.message ?? "Google sign-in failed");
+    if (res.error) { toast.error(res.error.message ?? "Google sign-in failed"); return; }
     if (res.redirected) return;
     navigate({ to: safePath(search.redirect) });
   }
@@ -197,7 +197,7 @@ function AuthPage() {
   );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Field({ label, error, children }: { label: string; error?: string | undefined; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
       <Label>{label}</Label>

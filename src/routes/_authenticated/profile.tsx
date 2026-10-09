@@ -34,11 +34,11 @@ function ProfilePage() {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     const r = schema.safeParse({ display_name: name, gender });
-    if (!r.success) return toast.error(r.error.issues[0].message);
+    if (!r.success) { toast.error(r.error.issues[0]?.message ?? "Invalid input"); return; }
     setBusy(true);
     const { error } = await supabase.from("profiles").update({ ...r.data, updated_at: new Date().toISOString() }).eq("id", hh.data!.userId);
     setBusy(false);
-    if (error) return toast.error(errorMessage(error));
+    if (error) { toast.error(errorMessage(error)); return; }
     toast.success("Profile saved");
     qc.invalidateQueries({ queryKey: ["household"] });
   }
