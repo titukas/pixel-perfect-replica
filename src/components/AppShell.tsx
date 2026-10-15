@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, Gift, Heart, ListChecks, Loader2, Sparkles } from "lucide-react";
@@ -9,6 +9,7 @@ import { APP_NAME, PRIVACY_VERSION, TERMS_VERSION } from "@/lib/app-config";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { InvitePartnerDialog } from "@/components/InvitePartner";
 
 export function initials(name?: string | null) {
   return (name ?? "?").split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
@@ -17,6 +18,24 @@ export function initials(name?: string | null) {
 export function AppShell({ children }: { children: ReactNode }) {
   const hh = useQuery(householdQuery);
   const bal = useQuery({ ...balanceQuery(hh.data?.userId ?? ""), enabled: !!hh.data });
+  const qc = useQueryClient();
+  const [inviteOpen, setInviteOpen] = useState(false);
+
+  useEffect(() => {
+    if (!hh.data?.householdId) return;
+    const channel = supabase
+      .channel(`household_members:${hh.data.householdId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "household_members", filter: `household_id=eq.${hh.data.householdId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["household"] });
+          qc.invalidateQueries({ queryKey: ["balance"] });
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [hh.data?.householdId, qc]);
 
   if (hh.isLoading) {
     return (
@@ -52,7 +71,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               {partner ? (
                 <><Heart className="size-3 fill-primary text-primary" /> with {partner.display_name}</>
               ) : (
-                <Link to="/profile" className="underline-offset-2 hover:underline">Not connected yet · invite partner</Link>
+                <button onClick={() => setInviteOpen(true)} className="underline-offset-2 hover:underline">Not connected yet · invite partner</button>
               )}
             </p>
           </div>
@@ -69,6 +88,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           <NavTab to="/rewards" icon={<Gift className="size-5" />} label="Rewards" />
         </div>
       </nav>
+      {hh.data.householdId && !partner && (
+        <InvitePartnerDialog
+          open={inviteOpen}
+          onOpenChange={setInviteOpen}
+          householdId={hh.data.householdId}
+        />
+      )}
     </div>
   );
 }
