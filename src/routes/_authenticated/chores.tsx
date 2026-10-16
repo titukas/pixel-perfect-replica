@@ -5,6 +5,7 @@ import { householdQuery, choresQuery } from "@/lib/household";
 import { APP_NAME } from "@/lib/app-config";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ChorePhotos } from "@/components/ChorePhotos";
 
 export const Route = createFileRoute("/_authenticated/chores")({
   head: () => ({ meta: [{ title: `Chores — ${APP_NAME}` }, { name: "description", content: "Your shared household chores." }] }),
@@ -56,6 +57,14 @@ function ChoresPage() {
                 {c.recurrence && <Badge variant="outline" className="gap-1 capitalize"><Repeat className="size-3" />{c.recurrence}</Badge>}
                 {c.due_date && <Badge variant="outline" className="gap-1"><Clock className="size-3" />{c.due_date}</Badge>}
               </div>
+              {hh.data && (
+                <ChorePhotos
+                  choreId={c.id}
+                  householdId={hh.data.householdId}
+                  userId={hh.data.userId}
+                  canStart={["available", "disputed"].includes(c.status) && (!c.assigned_to || c.assigned_to === hh.data.userId)}
+                />
+              )}
             </article>
           );
         })}

@@ -8,6 +8,13 @@
       "when": 1791541969827,
       "tag": "0000_core_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792140933705,
+      "tag": "0001_chore_photos_storage",
+      "breakpoints": true
     }
   ]
 }
