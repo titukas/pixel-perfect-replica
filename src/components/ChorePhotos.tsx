@@ -13,7 +13,7 @@ type Phase = "before" | "after";
 
 /** Photos and videos attached to the chore's current attempt. */
 export function ChorePhotos({ choreId, householdId, userId, completion, canStart, video }: {
-  choreId: string; householdId: string; userId: string; completion: Completion; canStart: boolean; video?: boolean;
+  choreId: string; householdId: string; userId: string; completion?: Completion; canStart: boolean; video?: boolean;
 }) {
   const qc = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
