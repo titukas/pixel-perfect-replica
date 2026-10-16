@@ -22,7 +22,7 @@ export function InvitePartnerButton({
   onPaired,
 }: {
   householdId: string;
-  onPaired?: () => void;
+  onPaired?: (() => void) | undefined;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -49,7 +49,7 @@ export function InvitePartnerDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   householdId: string;
-  onPaired?: () => void;
+  onPaired?: (() => void) | undefined;
 }) {
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [loading, setLoading] = useState(false);
