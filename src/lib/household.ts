@@ -76,3 +76,75 @@ export function errorMessage(e: unknown) {
   if (e && typeof e === "object" && "message" in e) return String((e as { message: string }).message);
   return "Something went wrong. Please try again.";
 }
+
+export const ACTIVE_COMPLETION_STATUSES = ["in_progress", "awaiting_verification"] as const;
+
+export const activeCompletionsQuery = (householdId: string) =>
+  queryOptions({
+    queryKey: ["completions", householdId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chore_completions")
+        .select("*")
+        .eq("household_id", householdId)
+        .in("status", [...ACTIVE_COMPLETION_STATUSES]);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+export const redemptionsQuery = (householdId: string) =>
+  queryOptions({
+    queryKey: ["redemptions", householdId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reward_redemptions")
+        .select("*")
+        .eq("household_id", householdId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+export const historyQuery = (userId: string) =>
+  queryOptions({
+    queryKey: ["history", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("point_transactions")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+export const notificationsQuery = (userId: string) =>
+  queryOptions({
+    queryKey: ["notifications", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+/** Seconds left on a running chore timer (0 when finished). */
+export function secondsLeft(startedAt: string, timerSeconds: number, now = Date.now()) {
+  const end = new Date(startedAt).getTime() + timerSeconds * 1000;
+  return Math.max(0, Math.ceil((end - now) / 1000));
+}
+
+/** Net points = sum of all ledger amounts. */
+export function ledgerBalance(rows: { amount: number }[]) {
+  return rows.reduce((s, r) => s + r.amount, 0);
+}
